@@ -161,6 +161,8 @@ div.background {
 
   background-color: black;
   opacity: 0.7;
+
+  animation: background-fade-in 0.5s ease;
 }
 
 div.start-screen {
@@ -175,7 +177,7 @@ div.start-screen {
   border-radius: 3vmin;
   box-shadow: 1vmin 1.1vmin 2vmin rgb(0, 0, 0);
 
-  animation: fadeIn 1s timing-function delay iteration-count direction fill-mode;
+  animation: fade-in 0.5s ease;
 
   .welcome-text {
     display: flex;
@@ -319,12 +321,22 @@ div.start-screen {
   }
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
   0% {
     opacity: 0;
   }
 
   100% {
     opacity: 1;
+  }
+}
+
+@keyframes background-fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0.7;
   }
 }

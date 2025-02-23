@@ -131,6 +131,7 @@ div.background {
   height: 100%;
   background-color: black;
   opacity: 0.7;
+  animation: background-fade-in 0.5s ease;
 }
 
 div.start-screen {
@@ -141,7 +142,7 @@ div.start-screen {
   border: 0.25vmin solid rgb(0, 0, 0);
   border-radius: 3vmin;
   box-shadow: 1vmin 1.1vmin 2vmin rgb(0, 0, 0);
-  animation: fadeIn 1s timing-function delay iteration-count direction fill-mode;
+  animation: fade-in 0.5s ease;
 }
 div.start-screen .welcome-text {
   display: flex;
@@ -244,11 +245,19 @@ div.start-screen .betting-container .bet .submit input:hover {
   box-shadow: 0.3vmin 0.3vmin 0.5vmin rgb(0, 0, 0);
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
   0% {
     opacity: 0;
   }
   100% {
     opacity: 1;
+  }
+}
+@keyframes background-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.7;
   }
 }/*# sourceMappingURL=style.css.map */
