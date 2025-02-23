@@ -1,0 +1,330 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border: unset;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2vmin;
+
+  min-height: 100dvh;
+
+  background-image: url(casino-table-background.jpg);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+div.game-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  width: 120vmin;
+  height: 100vmin;
+  max-width: 100%;
+  max-height: 100dvh;
+}
+
+div.dealer-cards,
+div.player-cards {
+  display: flex;
+  justify-content: center;
+  gap: 2vmin;
+
+  width: 100%;
+  height: auto;
+}
+
+img.card {
+  width: 20vmin;
+  height: auto;
+  max-width: 100%;
+}
+
+div.info-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  height: 20vmin;
+
+  padding: 1vmin;
+
+  min-width: 90%;
+}
+
+div.betting-info {
+  width: 33%;
+  font-size: 2.5vmin;
+
+  .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+    width: 80%;
+
+    button {
+      width: 100%;
+      font-size: 2vmin;
+    }
+  }
+
+  .bets {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    height: 69%;
+  }
+}
+
+div.drawn-cards-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 33%;
+
+  p {
+    position: relative;
+
+    margin: 0;
+    font-size: 2.2vmin;
+
+    width: 100%;
+
+    text-align: center;
+  }
+
+  p:nth-child(2)::after {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    border-bottom: 2px solid black;
+  }
+}
+
+div.game-mechanic {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5vmin;
+
+  width: 33%;
+
+  button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 55%;
+    height: 30%;
+
+    font-size: 2vmin;
+  }
+}
+
+button {
+  background-color: #FFFFFF;
+
+  border-top: 0.25vmin solid #083d00df;
+  border-left: 0.25vmin solid #083d00fa;
+  border-radius: 0.7vmin;
+
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: rgb(15, 203, 134);
+
+  transition: all 0.3s ease;
+}
+
+div.background {
+  position: absolute;
+
+  width: 100%;
+  height: 100%;
+
+  background-color: black;
+  opacity: 0.7;
+}
+
+div.start-screen {
+  position: absolute;
+
+  width: 60vmin;
+  height: 55vmin;
+
+  background-color: rgb(0, 100, 0);
+
+  border: 0.25vmin solid rgb(0, 0, 0);
+  border-radius: 3vmin;
+  box-shadow: 1vmin 1.1vmin 2vmin rgb(0, 0, 0);
+
+  animation: fadeIn 1s timing-function delay iteration-count direction fill-mode;
+
+  .welcome-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1vmin;
+
+    height: 28vmin;
+
+    h1 {
+      padding-top: 1vmin;
+
+      text-align: center;
+      font-size: 3.3vmin;
+    }
+
+    ul {
+      padding-left: 4vmin;
+
+      font-style: italic;
+      font-size: 1.6vmin;
+    }
+
+    h3 {
+      padding-left: 2vmin;
+
+      font-size: 1.6vmin;
+    }
+
+    li {
+      margin: 0.8vmin 0;
+    }
+  }
+
+  .betting-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+
+    height: calc(100% - 30vmin);
+    margin-top: 2vmin;
+
+    h2 {
+      text-align: center;
+      font-size: 2.8vmin;
+    }
+
+    .buttons {
+      position: relative;
+  
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+  
+      /* height: 7vmin; */
+  
+      button {
+        z-index: 1;
+        
+        width: 16vmin;
+        height: 3vmin;
+  
+        font-size: 2vmin;
+      }
+    }
+
+    .buttons::after {
+      content: "";
+  
+      position: absolute;
+      top: 0;
+      left: 0;
+  
+      width: 85%;
+      height: calc(100% + 1.1vmin);
+  
+      transform: translate(9.5%, 0.25vmin);
+  
+      border-bottom: 0.25vmin solid black;
+    }
+
+    .bet { 
+      transform: translateY(1vmin);
+
+      width: 100%;
+      height: 10vmin;
+      
+      .start-cash {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        width: 100%;
+        height: 50%;
+
+        font-size: 1.8vmin;
+      }
+
+      .input-field {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+
+        width: 100%;
+        height: 50%;
+
+        font-size: 1.7vmin;
+
+        input {
+          font-size: 1.7vmin;
+          text-align: center;
+
+          border-radius: 0.5vmin;
+        }
+      }
+
+      .submit {
+        display: flex;
+        justify-content: center;
+
+        transform: translateY(-2.5vmin);
+
+        input {
+          font-size: 1.7vmin;
+          text-align: center;
+
+          border-radius: 0.5vmin;
+
+          width: 10%;
+        }
+
+        input:hover {
+          cursor: pointer;
+
+          transition: all 0.3s ease;
+
+          box-shadow: 0.3vmin 0.3vmin 0.5vmin rgb(0, 0, 0);
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
