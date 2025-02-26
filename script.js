@@ -1,5 +1,7 @@
 let deckId = null;
 let remainingCards = null;
+let currentBet = 0;
+let currentBalance = 500;
 
 const shuffleCardsAndGetDeckId = async () => {
   const shuffledCardsResponse = await fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6");
@@ -23,74 +25,59 @@ const loadDeckIdFromStorage = async () => {
   }
 }
 
-const drawStarterCards = async () => {
-  const drawStarterCardsResponse = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=2`);
-  const StarterCards = await drawStarterCardsResponse.json();
+const drawCards = async number => {
+  const drawCardsResponse = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${number}`);
+  const drawnCards = await drawCardsResponse.json();
 
-  remainingCards = StarterCards.remaining;
+  remainingCards = drawnCards.remaining;
   localStorage.setItem("remainingCards", remainingCards);
   console.log("Cards remaining: ", remainingCards);
 
-  return StarterCards;
-}
-
-const drawCard = async () => {
-  const drawCardRespone = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=1`);
-  const drawnCard = await drawCardRespone.json();
-
-  remainingCards = drawnCard.remaining;
-  localStorage.setItem("remainingCards", remainingCards);
-  console.log("Cards remaining: ", remainingCards);
-
-  return drawnCard;
+  return drawnCards;
 }
 
 const startingScreen = () => {
   const startScreen = `
-    <div class="background"></div>
+    <div class="start-screen-container">
+      <div class="background"></div>
 
-    <div class="start-screen">
-      <div class="welcome-text">
-        <h1>Welcome to Blackjack!</h1>
-        <h3>The game is about getting as close as possible to 21 without going over</h3>
-        <ul>
-          <li>You and the dealer start with <strong>two</strong> cards each</li>
-          <li>Number cards are worth their face value</li>
-          <li>Face cards <strong>(King, Queen, Jack)</strong> are worth <strong>10</strong></li>
-          <li><strong>Aces</strong> can be <strong>1</strong> or <strong>11</strong>, depending on what helps you the most</li>
-          <li>You can <strong>Hit</strong> to draw another card or <strong>Stand</strong> to keep your current hand</li>
-          <li>The dealer must keep drawing until they reach at least <strong>17</strong></li>
-          <li>If you go over <strong>21</strong>, you <strong>Bust</strong> and lose the round</li>
-        </ul>
-      </div>
-      <div class="betting-container">
-        <h2>Please place your bet</h2>
-        <div class="buttons">
-          <button>All in</button> 
-          <button>Bet half</button>
+      <div class="start-screen">
+        <div class="welcome-text">
+          <h1>Welcome to Blackjack!</h1>
+          <h3>The game is about getting as close as possible to 21 without going over</h3>
+          <ul>
+            <li>You and the dealer start with <strong>two</strong> cards each</li>
+            <li>Number cards are worth their face value</li>
+            <li>Face cards <strong>(King, Queen, Jack)</strong> are worth <strong>10</strong></li>
+            <li><strong>Aces</strong> can be <strong>1</strong> or <strong>11</strong>, depending on what helps you the most</li>
+            <li>You can <strong>Hit</strong> to draw another card or <strong>Stand</strong> to keep your current hand</li>
+            <li>The dealer must keep drawing until they reach at least <strong>17</strong></li>
+            <li>If you go over <strong>21</strong>, you <strong>Bust</strong> and lose the round</li>
+          </ul>
         </div>
-        <div class="bet">
-          <div class="start-cash">
-            <h3>Starting cash: ${betBalance()}$</h3>
+        <div class="betting-container">
+          <h2>Please place your bet</h2>
+          <div class="buttons">
+            <button id="all-in">All in</button> 
+            <button id="bet-half">Bet half</button>
           </div>
-          <div class="input-field">
-            <input type="text" name="bet" id="bet">
+          <div class="bet">
+            <div class="start-cash">
+              <h3>Starting cash: ${currentBalance}$</h3>
             </div>
-          <div class="submit">
-            <input type="submit" value="Start">
+            <div class="input-field">
+              <input type="text" name="bet" id="bet">
+              </div>
+            <div class="start-button">
+              <button id="submit">Start</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   `;
-  
+
   return startScreen;
-}
-
-const betBalance = () => {
-  let balance = 500;
-
-  return balance;
 }
 
 const convertStringValueToNumber = ({ value }) => {
@@ -159,8 +146,8 @@ const createDom = async (rootElement, drawnCardsForDealer, drawnCardsForPlayer) 
       <div class="info-container">
         <div class="betting-info">
           <div class="bets">
-            <h2>Bet: $<h2>
-            <h2>Balance: ${betBalance()}$<h2>
+            <h2 id="betH2">Bet: ${currentBet}$<h2>
+            <h2 id="balanceH2">Balance: ${currentBalance}$<h2>
           </div>
         </div>
 
@@ -193,8 +180,8 @@ const loadEvent = async () => {
 
   await loadDeckIdFromStorage();
 
-  const drawnCardsForDealer = await drawStarterCards();
-  const drawnCardsForPlayer = await drawStarterCards();
+  const drawnCardsForDealer = await drawCards(2);
+  const drawnCardsForPlayer = await drawCards(2);
 
   await createDom(rootElement, drawnCardsForDealer, drawnCardsForPlayer);
 
@@ -206,7 +193,7 @@ const loadEvent = async () => {
   const dealerP = document.querySelector("#dealer");
 
   hitButton.addEventListener("click", async () => {
-    const drawnCard = await drawCard();
+    const drawnCard = await drawCards(1);
 
     if (totalPlayerCards === 0) {
       totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[0]);
@@ -237,7 +224,7 @@ const loadEvent = async () => {
     while (totalDealerCards < 17) {
       await new Promise(timer => setInterval(timer, 1000));
 
-      const drawnCard = await drawCard();
+      const drawnCard = await drawCards(1);
 
       calculateCards(drawnCard.cards[0], false);
 
@@ -256,6 +243,48 @@ const loadEvent = async () => {
   });
 
   rootElement.insertAdjacentHTML("beforeend", startingScreen());
+  const startScreenContainer = document.querySelector(".start-screen-container");
+  const submitBtn = document.querySelector("#submit");
+  const inputField = document.querySelector("#bet");
+  const betH2 = document.querySelector("#betH2");
+  const balanceH2 = document.querySelector("#balanceH2");
+  const allInBtn = document.querySelector("#all-in");
+  const betHalfBtn = document.querySelector("#bet-half");
+
+  inputField.addEventListener("keypress", e => {
+    if (!/[0-9]/.test(e.key)) {
+      e.preventDefault();
+    }
+  });
+
+  inputField.addEventListener("click", () => {
+    inputField.value = "";
+  });
+
+  allInBtn.addEventListener("click", () => {
+    inputField.value = `${currentBalance}`;
+  });
+
+  betHalfBtn.addEventListener("click", () => {
+    inputField.value = `${currentBalance / 2}`;
+  });
+
+  submitBtn.addEventListener("click", () => {
+    const betAmount = parseInt(inputField.value);
+
+    if (betAmount > 0 && betAmount <= currentBalance) {
+      currentBet = betAmount;
+      startScreenContainer.classList.toggle("disable-start-screen");
+
+      newBalance = currentBalance - betAmount;
+      balanceH2.innerText = `Balance: ${newBalance}$`;
+      betH2.innerText = `Bet: ${currentBet}$`;
+    } else if (isNaN(betAmount)) {
+      inputField.value = "Please enter a number!";
+    } else {
+      inputField.value = "Bet more than balance!";
+    }
+  });
 }
 
 window.addEventListener("load", loadEvent);
