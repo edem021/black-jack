@@ -2,6 +2,9 @@ let deckId = null;
 let remainingCards = null;
 let currentBet = 0;
 let currentBalance = 500;
+let WIN_TEXT = "";
+let LOSE_TEXT = "You lost the game!";
+let TIE_TEXT = "";
 
 const shuffleCardsAndGetDeckId = async () => {
   const shuffledCardsResponse = await fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6");
@@ -36,7 +39,7 @@ const drawCards = async number => {
   return drawnCards;
 }
 
-const startingScreen = () => {
+const startingScreen = rootElement => {
   const startScreen = `
     <div class="start-screen-container">
       <div class="background"></div>
@@ -76,10 +79,28 @@ const startingScreen = () => {
       </div>
     </div>
   `;
-
-  return startScreen;
+  
+  rootElement.insertAdjacentHTML("beforeend", startScreen);
 }
 
+const restartScreen = (conditionText, rootElement) => {
+  const restartScreen = `
+    <div class="restart-screen-container">
+      <div class="background"></div>
+
+      <div class="restart-screen">
+        <h1>${conditionText}</h1>
+        <p>Would you like to try again?</p>
+        <div class="restart-buttons">
+          <button id="restart-yes">Yes</button>
+          <button id="restart-no">No</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  rootElement.insertAdjacentHTML("beforeend", restartScreen);
+}
 const convertStringValueToNumber = ({ value }) => {
   let card = 0;
 
@@ -211,7 +232,9 @@ const loadEvent = async () => {
     playerP.innerText = `Player - ${totalPlayerCards}`;
 
     if (totalPlayerCards > 21) {
-      console.log("You busted");
+      restartScreen(LOSE_TEXT, rootElement);
+    } else if (totalPlayerCards === 21) {
+      restartScreen(WIN_TEXT, rootElement);
     }
   });
 
@@ -219,6 +242,11 @@ const loadEvent = async () => {
     if (totalDealerCards === 0) {
       totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[0]);
       totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[1]);
+    }
+
+    if (totalPlayerCards === 0) {
+      totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[0]);
+      totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[1]);
     }
 
     while (totalDealerCards < 17) {
@@ -237,12 +265,17 @@ const loadEvent = async () => {
       dealerP.innerText = `Dealer - ${totalDealerCards}`;
     }
 
-    if (totalDealerCards > 21) {
-      console.log("Dealer busted");
+    if (totalDealerCards > 21 || totalDealerCards < totalPlayerCards) {
+      restartScreen(WIN_TEXT, rootElement);
+    } else if (totalDealerCards > totalPlayerCards) {
+      restartScreen(LOSE_TEXT, rootElement);
+    } else {
+      restartScreen(TIE_TEXT, rootElement);
     }
   });
 
-  rootElement.insertAdjacentHTML("beforeend", startingScreen());
+  startingScreen(rootElement);
+
   const startScreenContainer = document.querySelector(".start-screen-container");
   const submitBtn = document.querySelector("#submit");
   const inputField = document.querySelector("#bet");
@@ -254,6 +287,12 @@ const loadEvent = async () => {
   inputField.addEventListener("keypress", e => {
     if (!/[0-9]/.test(e.key)) {
       e.preventDefault();
+      return;
+    }
+
+    if (inputField.value.length === 0 && e.key === "0") {
+      e.preventDefault();
+      return;
     }
   });
 
@@ -283,6 +322,13 @@ const loadEvent = async () => {
       inputField.value = "Please enter a number!";
     } else {
       inputField.value = "Bet more than balance!";
+    }
+
+    totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[0]);
+    totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[1]);
+
+    if (totalDealerCards === 21) {
+      restartScreen(LOSE_TEXT, rootElement);
     }
   });
 }
