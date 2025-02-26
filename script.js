@@ -2,9 +2,9 @@ let deckId = null;
 let remainingCards = null;
 let currentBet = 0;
 let currentBalance = 500;
-let WIN_TEXT = "";
+let WIN_TEXT = "You won the game!";
 let LOSE_TEXT = "You lost the game!";
-let TIE_TEXT = "";
+let TIE_TEXT = "It's a tie!";
 
 const shuffleCardsAndGetDeckId = async () => {
   const shuffledCardsResponse = await fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6");
