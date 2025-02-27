@@ -4,7 +4,9 @@ let currentBet = 0;
 let currentBalance = 500;
 let WIN_TEXT = "You won the game!";
 let LOSE_TEXT = "You lost the game!";
-let TIE_TEXT = "It's a tie!";
+let PUSH_TEXT = "Push!";
+let totalPlayerCards = 0;
+let totalDealerCards = 0;
 
 const shuffleCardsAndGetDeckId = async () => {
   const shuffledCardsResponse = await fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6");
@@ -79,12 +81,12 @@ const startingScreen = rootElement => {
       </div>
     </div>
   `;
-  
+
   rootElement.insertAdjacentHTML("beforeend", startScreen);
 }
 
-const restartScreen = (conditionText, rootElement) => {
-  const restartScreen = `
+const betScreen = (conditionText, rootElement) => {
+  const betScreen = `
     <div class="restart-screen-container">
       <div class="background"></div>
 
@@ -99,7 +101,7 @@ const restartScreen = (conditionText, rootElement) => {
     </div>
   `;
 
-  rootElement.insertAdjacentHTML("beforeend", restartScreen);
+  rootElement.insertAdjacentHTML("beforeend", betScreen);
 }
 const convertStringValueToNumber = ({ value }) => {
   let card = 0;
@@ -125,9 +127,6 @@ const calculateStarterCards = ({ cards }) => {
 
   return firstCard + secondCard;
 }
-
-let totalPlayerCards = 0;
-let totalDealerCards = 0;
 
 const calculateCards = (card, isPlayer = true) => {
   const cardNum = convertStringValueToNumber(card);
@@ -173,13 +172,15 @@ const createDom = async (rootElement, drawnCardsForDealer, drawnCardsForPlayer) 
         </div>
 
         <div class="drawn-cards-info">
-          <p id="dealer">Dealer - ${calculateStarterCards(drawnCardsForDealer)}</p>
-          <p id="player">Player - ${calculateStarterCards(drawnCardsForPlayer)}</p>
+          <div class="dealer-player">
+            <p id="dealer">Dealer - ${calculateStarterCards(drawnCardsForDealer)}</p>
+            <p id="player">Player - ${calculateStarterCards(drawnCardsForPlayer)}</p>
+          </div>
         </div>
 
         <div class="game-mechanic">
-          <button id="hit"><strong>Hit</strong></button>
-          <button id="stand"><strong>Stand</strong></button>
+          <button class="hit"><strong>Hit</strong></button>
+          <button class="stand"><strong>Stand</strong></button>
         </div>
       </div>
 
@@ -196,24 +197,106 @@ const createDom = async (rootElement, drawnCardsForDealer, drawnCardsForPlayer) 
   rootElement.insertAdjacentHTML("beforeend", domHtml);
 }
 
+const restartGame = (mechanicBtns, playerCards, dealerCards, drawnCardsInfo, drawnCardsForPlayer, drawnCardsForDealer) => {
+  mechanicBtns.insertAdjacentHTML("beforeend", `
+    <button class="hit"><strong>Hit</strong></button>
+    <button class="stand"><strong>Stand</strong></button>
+  `);
+  playerCards.insertAdjacentHTML("beforeend", `
+    <div>
+      <img src="${drawnCardsForPlayer.cards[0].image}" class="card" />
+    </div>
+    <div>
+      <img src="${drawnCardsForPlayer.cards[1].image}" class="card" />
+    </div>
+  `);
+  dealerCards.insertAdjacentHTML("beforeend", `
+    <div>
+      <img src="${drawnCardsForDealer.cards[0].image}" class="card" />
+    </div>
+    <div>
+      <img src="${drawnCardsForDealer.cards[1].image}" class="card" />
+    </div>
+  `);
+  drawnCardsInfo.insertAdjacentHTML("beforeend", `
+    <div class="dealer-player">
+      <p id="dealer">Dealer - ${calculateStarterCards(drawnCardsForDealer)}</p>
+      <p id="player">Player - ${calculateStarterCards(drawnCardsForPlayer)}</p>
+    </div>
+  `);
+}
+
+const winOrLoseOrPush = (gameCondition, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn) => {
+  if (isWin) {
+    currentBalance += currentBet * 2;
+    balanceH2.innerText = `Balance: ${currentBalance}$`;
+  }
+
+  hitButton.innerHTML = `<strong>Play again</strong>`;
+  hitButton.removeEventListener("click", hitButtonFn);
+  hitButton.addEventListener("click", playAgainFn);
+
+  standButton.innerHTML = `<strong>Quit</strong>`;
+  standButton.removeEventListener("click", standButtonFn);
+
+  drawnCardsInfo.insertAdjacentHTML("afterbegin", `<div class="condition-container">${gameCondition}</div>`);
+}
+
 const loadEvent = async () => {
   const rootElement = document.querySelector("#root");
 
   await loadDeckIdFromStorage();
 
-  const drawnCardsForDealer = await drawCards(2);
-  const drawnCardsForPlayer = await drawCards(2);
+  let drawnCardsForDealer = await drawCards(2);
+  let drawnCardsForPlayer = await drawCards(2);
 
   await createDom(rootElement, drawnCardsForDealer, drawnCardsForPlayer);
 
-  const hitButton = document.querySelector("#hit");
-  const standButton = document.querySelector("#stand");
+  const hitButton = document.querySelector(".hit");
+  const standButton = document.querySelector(".stand");
   const playerCards = document.querySelector(".player-cards");
   const dealerCards = document.querySelector(".dealer-cards");
   const playerP = document.querySelector("#player");
   const dealerP = document.querySelector("#dealer");
+  const drawnCardsInfo = document.querySelector(".drawn-cards-info");
 
-  hitButton.addEventListener("click", async () => {
+  const keepBetAndstartOver = async () => {
+    hitButton.removeEventListener("click", keepBetAndstartOver);
+
+    playerCards.innerHTML = "";
+    dealerCards.innerHTML = "";
+    mechanicBtns.innerHTML = "";
+    drawnCardsInfo.innerHTML = "";
+    totalDealerCards = 0;
+    totalPlayerCards = 0;
+
+    drawnCardsForPlayer = await drawCards(2);
+    drawnCardsForDealer = await drawCards(2);
+    
+    if (!playerCards.innerHTML && !dealerCards.innerHTML && !mechanicBtns.innerHTML && !drawnCardsInfo.innerHTML) {
+      restartGame(mechanicBtns, playerCards, dealerCards, drawnCardsInfo, drawnCardsForPlayer, drawnCardsForDealer);
+
+      const newHitButton = document.querySelector(".hit");
+      const newStandButton = document.querySelector(".stand");
+
+      newHitButton.addEventListener("click", hitButtonFn);
+      newStandButton.addEventListener("click", standButtonFn);
+    }
+    
+  }
+
+  const playAgainFn = () => {
+    hitButton.removeEventListener("click", playAgainFn);
+
+    hitButton.innerHTML = `<strong>Keep bet</strong>`;
+    standButton.innerHTML = `<strong>Change bet</strong>`;
+
+    mechanicBtns.insertAdjacentHTML("beforeend", `<button id="back"><strong>Back</strong></button>`);
+
+    hitButton.addEventListener("click", keepBetAndstartOver);
+  }
+
+  const hitButtonFn = async () => {
     const drawnCard = await drawCards(1);
 
     if (totalPlayerCards === 0) {
@@ -232,19 +315,17 @@ const loadEvent = async () => {
     playerP.innerText = `Player - ${totalPlayerCards}`;
 
     if (totalPlayerCards > 21) {
-      restartScreen(LOSE_TEXT, rootElement);
+      winOrLoseOrPush(LOSE_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
     } else if (totalPlayerCards === 21) {
-      restartScreen(WIN_TEXT, rootElement);
+      winOrLoseOrPush(WIN_TEXT, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
     }
-  });
+  }
 
-  standButton.addEventListener("click", async () => {
+  const standButtonFn = async () => {
     if (totalDealerCards === 0) {
       totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[0]);
       totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[1]);
-    }
-
-    if (totalPlayerCards === 0) {
+    } else if (totalPlayerCards === 0) {
       totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[0]);
       totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[1]);
     }
@@ -266,13 +347,16 @@ const loadEvent = async () => {
     }
 
     if (totalDealerCards > 21 || totalDealerCards < totalPlayerCards) {
-      restartScreen(WIN_TEXT, rootElement);
+      winOrLoseOrPush(WIN_TEXT, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
     } else if (totalDealerCards > totalPlayerCards) {
-      restartScreen(LOSE_TEXT, rootElement);
+      winOrLoseOrPush(LOSE_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
     } else {
-      restartScreen(TIE_TEXT, rootElement);
+      winOrLoseOrPush(PUSH_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
     }
-  });
+  }
+
+  hitButton.addEventListener("click", hitButtonFn);
+  standButton.addEventListener("click", standButtonFn);
 
   startingScreen(rootElement);
 
@@ -283,6 +367,7 @@ const loadEvent = async () => {
   const balanceH2 = document.querySelector("#balanceH2");
   const allInBtn = document.querySelector("#all-in");
   const betHalfBtn = document.querySelector("#bet-half");
+  const mechanicBtns = document.querySelector(".game-mechanic");
 
   inputField.addEventListener("keypress", e => {
     if (!/[0-9]/.test(e.key)) {
@@ -315,8 +400,8 @@ const loadEvent = async () => {
       currentBet = betAmount;
       startScreenContainer.classList.toggle("disable-start-screen");
 
-      newBalance = currentBalance - betAmount;
-      balanceH2.innerText = `Balance: ${newBalance}$`;
+      currentBalance = currentBalance - betAmount;
+      balanceH2.innerText = `Balance: ${currentBalance}$`;
       betH2.innerText = `Bet: ${currentBet}$`;
     } else if (isNaN(betAmount)) {
       inputField.value = "Please enter a number!";
@@ -328,7 +413,9 @@ const loadEvent = async () => {
     totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[1]);
 
     if (totalDealerCards === 21) {
-      restartScreen(LOSE_TEXT, rootElement);
+      winOrLoseOrPush(LOSE_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
+    } else if (totalPlayerCards === 21) {
+      winOrLoseOrPush(WIN_TEXT, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
     }
   });
 }
