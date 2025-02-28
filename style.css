@@ -209,7 +209,6 @@ div.start-screen-container div.start-screen .betting-container .buttons {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-  /* height: 7vmin; */
 }
 div.start-screen-container div.start-screen .betting-container .buttons button {
   z-index: 10;

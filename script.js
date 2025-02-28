@@ -1,3 +1,5 @@
+const CORS_PROXY = "https://corsproxy.io/?";
+const API_BASE = "https://deckofcardsapi.com/api/deck/";
 let deckId = null;
 let remainingCards = null;
 let currentBet = 0;
@@ -9,7 +11,7 @@ let totalPlayerCards = 0;
 let totalDealerCards = 0;
 
 const shuffleCardsAndGetDeckId = async () => {
-  const shuffledCardsResponse = await fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6");
+  const shuffledCardsResponse = await fetch(`${CORS_PROXY}${API_BASE}new/shuffle/?deck_count=6`);
   const dataOfShuffledCards = await shuffledCardsResponse.json();
 
   deckId = dataOfShuffledCards.deck_id;
@@ -31,7 +33,7 @@ const loadDeckIdFromStorage = async () => {
 }
 
 const drawCards = async number => {
-  const drawCardsResponse = await fetch(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${number}`);
+  const drawCardsResponse = await fetch(`${CORS_PROXY}${API_BASE}${deckId}/draw/?count=${number}`);
   const drawnCards = await drawCardsResponse.json();
 
   remainingCards = drawnCards.remaining;
@@ -85,7 +87,7 @@ const startingScreen = rootElement => {
   rootElement.insertAdjacentHTML("beforeend", startScreen);
 }
 
-const betScreen = (conditionText, rootElement) => {
+/* const betScreen = (conditionText, rootElement) => {
   const betScreen = `
     <div class="restart-screen-container">
       <div class="background"></div>
@@ -102,7 +104,8 @@ const betScreen = (conditionText, rootElement) => {
   `;
 
   rootElement.insertAdjacentHTML("beforeend", betScreen);
-}
+} */
+
 const convertStringValueToNumber = ({ value }) => {
   let card = 0;
 
@@ -197,36 +200,12 @@ const createDom = async (rootElement, drawnCardsForDealer, drawnCardsForPlayer) 
   rootElement.insertAdjacentHTML("beforeend", domHtml);
 }
 
-const restartGame = (mechanicBtns, playerCards, dealerCards, drawnCardsInfo, drawnCardsForPlayer, drawnCardsForDealer) => {
-  mechanicBtns.insertAdjacentHTML("beforeend", `
-    <button class="hit"><strong>Hit</strong></button>
-    <button class="stand"><strong>Stand</strong></button>
-  `);
-  playerCards.insertAdjacentHTML("beforeend", `
-    <div>
-      <img src="${drawnCardsForPlayer.cards[0].image}" class="card" />
-    </div>
-    <div>
-      <img src="${drawnCardsForPlayer.cards[1].image}" class="card" />
-    </div>
-  `);
-  dealerCards.insertAdjacentHTML("beforeend", `
-    <div>
-      <img src="${drawnCardsForDealer.cards[0].image}" class="card" />
-    </div>
-    <div>
-      <img src="${drawnCardsForDealer.cards[1].image}" class="card" />
-    </div>
-  `);
-  drawnCardsInfo.insertAdjacentHTML("beforeend", `
-    <div class="dealer-player">
-      <p id="dealer">Dealer - ${calculateStarterCards(drawnCardsForDealer)}</p>
-      <p id="player">Player - ${calculateStarterCards(drawnCardsForPlayer)}</p>
-    </div>
-  `);
-}
-
-const winOrLoseOrPush = (gameCondition, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn) => {
+const winOrLoseOrPush = (gameCondition, isWin = true, hitButtonFn, playAgainFn, standButtonFn) => {
+  const hitButton = document.querySelector(".hit");
+  const standButton = document.querySelector(".stand");
+  const drawnCardsInfo = document.querySelector(".drawn-cards-info");
+  const balanceH2 = document.querySelector("#balanceH2");
+  
   if (isWin) {
     currentBalance += currentBet * 2;
     balanceH2.innerText = `Balance: ${currentBalance}$`;
@@ -252,51 +231,60 @@ const loadEvent = async () => {
 
   await createDom(rootElement, drawnCardsForDealer, drawnCardsForPlayer);
 
-  const hitButton = document.querySelector(".hit");
-  const standButton = document.querySelector(".stand");
-  const playerCards = document.querySelector(".player-cards");
-  const dealerCards = document.querySelector(".dealer-cards");
-  const playerP = document.querySelector("#player");
-  const dealerP = document.querySelector("#dealer");
-  const drawnCardsInfo = document.querySelector(".drawn-cards-info");
+  let hitButton = document.querySelector(".hit");
+  let standButton = document.querySelector(".stand");
+  let playerCards = document.querySelector(".player-cards");
+  let dealerCards = document.querySelector(".dealer-cards");
+  let playerP = document.querySelector("#player");
+  let dealerP = document.querySelector("#dealer");
+  let drawnCardsInfo = document.querySelector(".drawn-cards-info");
+  let mechanicBtns = document.querySelector(".game-mechanic");
 
   const keepBetAndstartOver = async () => {
     hitButton.removeEventListener("click", keepBetAndstartOver);
 
-    playerCards.innerHTML = "";
-    dealerCards.innerHTML = "";
-    mechanicBtns.innerHTML = "";
-    drawnCardsInfo.innerHTML = "";
+    const gameContainer = document.querySelector(".game-container");
+    
+    gameContainer.remove();
     totalDealerCards = 0;
     totalPlayerCards = 0;
+    currentBalance = currentBalance - currentBet;
 
     drawnCardsForPlayer = await drawCards(2);
     drawnCardsForDealer = await drawCards(2);
-    
-    if (!playerCards.innerHTML && !dealerCards.innerHTML && !mechanicBtns.innerHTML && !drawnCardsInfo.innerHTML) {
-      restartGame(mechanicBtns, playerCards, dealerCards, drawnCardsInfo, drawnCardsForPlayer, drawnCardsForDealer);
 
-      const newHitButton = document.querySelector(".hit");
-      const newStandButton = document.querySelector(".stand");
+    await createDom(rootElement, drawnCardsForDealer, drawnCardsForPlayer);
 
-      newHitButton.addEventListener("click", hitButtonFn);
-      newStandButton.addEventListener("click", standButtonFn);
-    }
-    
+    playerCards = document.querySelector(".player-cards");
+    dealerCards = document.querySelector(".dealer-cards");
+    playerP = document.querySelector("#player");
+    dealerP = document.querySelector("#dealer");
+    drawnCardsInfo = document.querySelector(".drawn-cards-info");
+    mechanicBtns = document.querySelector(".game-mechanic");
+    hitButton = document.querySelector(".hit");
+    standButton = document.querySelector(".stand");
+
+    hitButton.addEventListener("click", hitButtonFn);
+    standButton.addEventListener("click", standButtonFn);
   }
 
   const playAgainFn = () => {
+    const hitButton = document.querySelector(".hit");
+    const standButton = document.querySelector(".stand");
+    const mechanicBtns = document.querySelector(".game-mechanic");
+    
     hitButton.removeEventListener("click", playAgainFn);
-
+    
     hitButton.innerHTML = `<strong>Keep bet</strong>`;
     standButton.innerHTML = `<strong>Change bet</strong>`;
 
     mechanicBtns.insertAdjacentHTML("beforeend", `<button id="back"><strong>Back</strong></button>`);
 
-    hitButton.addEventListener("click", keepBetAndstartOver);
+    hitButton.addEventListener("click", keepBetAndstartOver);   
   }
 
   const hitButtonFn = async () => {
+
     const drawnCard = await drawCards(1);
 
     if (totalPlayerCards === 0) {
@@ -315,9 +303,9 @@ const loadEvent = async () => {
     playerP.innerText = `Player - ${totalPlayerCards}`;
 
     if (totalPlayerCards > 21) {
-      winOrLoseOrPush(LOSE_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
-    } else if (totalPlayerCards === 21) {
-      winOrLoseOrPush(WIN_TEXT, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
+      winOrLoseOrPush(LOSE_TEXT, isWin = false, hitButtonFn, playAgainFn, standButtonFn);
+    } else if (totalPlayerCards === 21) {  
+      winOrLoseOrPush(WIN_TEXT, isWin = true, hitButtonFn, playAgainFn, standButtonFn);
     }
   }
 
@@ -325,7 +313,7 @@ const loadEvent = async () => {
     if (totalDealerCards === 0) {
       totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[0]);
       totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[1]);
-    } else if (totalPlayerCards === 0) {
+    } if (totalPlayerCards === 0) {
       totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[0]);
       totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[1]);
     }
@@ -347,11 +335,11 @@ const loadEvent = async () => {
     }
 
     if (totalDealerCards > 21 || totalDealerCards < totalPlayerCards) {
-      winOrLoseOrPush(WIN_TEXT, isWin = true, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
+      winOrLoseOrPush(WIN_TEXT, isWin = true, hitButtonFn, playAgainFn, standButtonFn);
     } else if (totalDealerCards > totalPlayerCards) {
-      winOrLoseOrPush(LOSE_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
+      winOrLoseOrPush(LOSE_TEXT, isWin = false, hitButtonFn, playAgainFn, standButtonFn);
     } else {
-      winOrLoseOrPush(PUSH_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
+      winOrLoseOrPush(PUSH_TEXT, isWin = false, hitButtonFn, playAgainFn, standButtonFn);
     }
   }
 
@@ -360,14 +348,13 @@ const loadEvent = async () => {
 
   startingScreen(rootElement);
 
-  const startScreenContainer = document.querySelector(".start-screen-container");
-  const submitBtn = document.querySelector("#submit");
-  const inputField = document.querySelector("#bet");
-  const betH2 = document.querySelector("#betH2");
-  const balanceH2 = document.querySelector("#balanceH2");
-  const allInBtn = document.querySelector("#all-in");
-  const betHalfBtn = document.querySelector("#bet-half");
-  const mechanicBtns = document.querySelector(".game-mechanic");
+  let startScreenContainer = document.querySelector(".start-screen-container");
+  let submitBtn = document.querySelector("#submit");
+  let inputField = document.querySelector("#bet");
+  let betH2 = document.querySelector("#betH2");
+  let balanceH2 = document.querySelector("#balanceH2");
+  let allInBtn = document.querySelector("#all-in");
+  let betHalfBtn = document.querySelector("#bet-half");
 
   inputField.addEventListener("keypress", e => {
     if (!/[0-9]/.test(e.key)) {
@@ -411,6 +398,9 @@ const loadEvent = async () => {
 
     totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[0]);
     totalDealerCards += convertStringValueToNumber(drawnCardsForDealer.cards[1]);
+
+    totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[0]);
+    totalPlayerCards += convertStringValueToNumber(drawnCardsForPlayer.cards[1]);
 
     if (totalDealerCards === 21) {
       winOrLoseOrPush(LOSE_TEXT, isWin = false, balanceH2, hitButton, standButton, drawnCardsInfo, hitButtonFn, playAgainFn, standButtonFn);
